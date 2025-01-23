@@ -13,10 +13,7 @@ class View(ft.UserControl):
         self._controller = None
         # graphical elements
         self._title = None
-        self.txt_name = None
-        self.btn_hello = None
-        self.txt_result = None
-        self.txt_container = None
+
 
     def load_interface(self):
         # title
@@ -39,8 +36,8 @@ class View(ft.UserControl):
                                           alignment=ft.MainAxisAlignment.CENTER))
 
         # List View where the reply is printed
-        self.txt_result = ft.ListView(expand=1, spacing=10, padding=20, auto_scroll=True)
-        self._page.controls.append(self.txt_result)
+        self._txt_result = ft.ListView(expand=1, spacing=10, padding=20, auto_scroll=True)
+        self._page.controls.append(self._txt_result)
         self._page.update()
 
     @property
@@ -52,5 +49,6 @@ class View(ft.UserControl):
 
     def set_controller(self, controller):
         self._controller = controller
+
     def update_page(self):
         self._page.update()
