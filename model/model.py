@@ -1,3 +1,5 @@
+import copy
+
 import networkx as nx
 from database.DAO import DAO
 
@@ -9,10 +11,23 @@ class Model:
         self._artObjectList = DAO.getAllObjects()
         # costruisco il grafo vuoto  secondo le indicazioni (semplice pesato) importando networkx
         self._grafo = nx.Graph()
+        #per il punto 2 inizializzo i parametri della ricorsione: percorso vuoto, costo 0
+        self._soluzioneMigliore = []
+        self._pesoMassimo = 0
+
         #creo il dizionario degli artefatti partendo dalla lista degli oggetti che collega l'id artefatto all'oggetto
         self._artefattiMap={}
+
         for v in self._artObjectList:
             self._artefattiMap[v.object_id] = v
+
+
+
+
+    #restituisce l'oggetto passandogli l'ID usando la mappa
+    # E' il metodo da fare insieme alla mappa cosi accedo all'oggetto con l'ID
+    def getObj(self,id_nodo):
+        return  self._artefattiMap[id_nodo]
 
 
     #metodo che popola il grafo
@@ -57,7 +72,6 @@ class Model:
     def getNumEdges(self):
         return len(self._grafo.edges)
 
-
     #controlla che il nodo esista. Restituisce True o False
     def checkExist(self,id_nodo):
         return id_nodo in self._artefattiMap
@@ -90,6 +104,78 @@ class Model:
         print (f"Metodo 4 (libreria nx): {len(set_tmp)}")
 
         return len(set_tmp)
+
+    #costruisco la ricorsione
+    def getPercorso(self, lunghezza,v0):
+        print(f"lunghezza cammino: {lunghezza}")
+        print (f"Source: {v0}")
+
+        #resetto i valori della ricorsione
+        self._soluzioneMigliore = []
+        self._pesoMassimo = 0
+
+        #creo la lista vuota della soluzione parziale
+        parziale=[]
+        #parto dal nodo source quindi posso già aggiungerlo
+        parziale.append(v0)
+        #il punto di partenza è il source e tutti i suoi vicini. Farò un ciclo for per ognuno di essi.
+        # da questi cammini troverò tutti quelli di lunghezza len
+        # scarterò sempre quello meno costoso rispetto a  quello che metterò in soluzioneMigliore
+        for v in self._grafo.neighbors(v0):
+            #controllo che i nodi siano dello stesso tipo di V0
+            if v.classification == v0.classification:
+                #aggiungo il primo vicino e sono certo di lanciare la ricorsione dopo un arco
+                parziale.append(v)
+                self.ricorsione(parziale,lunghezza)
+                #tornando verso l'elemento source devo rimuovere gli elementi della lista parziale di quel ramo
+                # perchè devo entrare negli altri rami
+                parziale.pop()
+        #ritorno la soluzione migliore e il peso massimo
+        return self._soluzioneMigliore, self._pesoMassimo
+
+
+    def ricorsione(self,parziale, lunghezza):
+        #appena lancio la ricorsione controllo che la lista vada bene
+        #se la lunghezza è uguale a quella richiesta controllo che la soluzione sia migliore di quella che ho salvato prima
+        ## CASO FINALE
+        if len(parziale) ==lunghezza:
+            #se la soluzione e migliore, la sostituisco con quella precedente
+            #faccio una copia di parziale e la sostituisco perchè altrimenti avrei il riferimento ma quando
+            #torno verso il source la lista parziale si svuta
+            if self.peso(parziale)>self._pesoMassimo:
+                self._pesoMassimo=self.peso(parziale)
+                self._soluzioneMigliore= copy.deepcopy(parziale)
+            #poichè avevo raggiunto la lunghezza di una soluzione devo uscire dalla ricorsione per tornare su nell'albero
+            return
+
+        # se arrivo qui è perchè la lunghezza non è ancora stata raggiunta: len(parziale)<lunghezza  quindi devo aggiungere nodi
+        #considero i vicini dell'ultimo nodo della lista parziale, ossia parziale[-1] e ciclo per prenderli tutti
+        ##CASO RICORSIVO
+        for v in self._grafo.neighbors(parziale[-1]):
+            #v lo aggiungo se non è gia in parziale e se ha stessa classification di V[-1] che è uguale a v0
+            # e poi faccio un'altra ricorsione
+            if v.classification == parziale[-1].classification and v not in parziale:
+                parziale.append(v)
+                self.ricorsione(parziale,lunghezza)
+                parziale.pop()
+
+
+    #sono certo che gli oggetti nella lista hanno tutti un arco
+    def peso(self,listaObj):
+        #inizializzo il peso =0
+        peso_tmp = 0
+        #ciclo sugli archi . ATTENZIONE AL LEN(-1)
+        for i in range(0,len(listaObj)-1):
+            #prendo l'arco tra l'oggetto i e l'oggetto i+1.
+            peso_tmp +=self._grafo[listaObj[i]][listaObj[i+1]]["weight"]
+        return peso_tmp
+
+
+
+
+
+
+
 
 
 

@@ -24,5 +24,5 @@ class ArtObject:
         return hash(self.object_id)
 
     def __str__(self):
-        return f"{self.object_id} - {self.object_name}"
+        return f"{self.object_id} - {self.object_name} - {self.classification}"
 
